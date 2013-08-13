@@ -70,30 +70,56 @@ namespace NuGetTestHelper
         }
 
         /// <summary>
-        /// Creates a new project based on the given projectTemplate and framework in the specified path.
+        /// Creates a new project based on the given projectTemplateName, Language and framework in the specified path.
         /// </summary>
         /// <param name="projectTemplate"></param>
         /// <param name="framework"></param>
         /// <param name="solnPath"></param>
-        public void CreateProject(string projectTemplate,string projectTargetFramework, string projectName, string solnFullPath=null)
+        public void CreateProject(string projectTemplateName,string projectLanguage,string projectTargetFramework, string projectName, string solnFullPath=null)
         {            
             try
             {
                 if (solnFullPath == null)
                     solnFullPath = Path.Combine(Environment.CurrentDirectory, "Solution" + DateTime.Now.Ticks.ToString());
                 this.SolutionPath = solnFullPath;
-                Solution2 soln = dteObject.Solution as Solution2;
-                string templatepath = soln.GetProjectTemplate(projectTemplate, "Csharp");
+                Solution2 soln = dteObject.Solution as Solution2;                                
                //setting the project location is required due to Nuget bug # 2917 : http://nuget.codeplex.com/workitem/2917
                 Properties prop = dteObject.Properties["Environment", "ProjectsAndSolution"];
                 prop.Item("ProjectsLocation").Value = Path.GetFullPath(Path.GetDirectoryName(solnFullPath));
+                string templatepath = soln.GetProjectTemplate(projectTemplateName, projectLanguage);
                 soln.AddFromTemplate(templatepath + projectTargetFramework, solnFullPath, projectName);              
             }
             catch (Exception e)
             {             
-                throw new Exception(string.Format("Unable to create project with template {0}. Make sure that the template is valid and the template file exists. Exception message : {1}", projectTemplate.ToString(), e.Message));
+                throw new Exception(string.Format("Unable to create project with template {0}. Make sure that the template is valid and the template file exists. Exception message : {1}", projectTemplateName.ToString(), e.Message));
             }           
         }
+
+        /// <summary>
+        /// Creates a new project based on the given full path to the project template.
+        /// </summary>
+        /// <param name="projectTemplate"></param>
+        /// <param name="framework"></param>
+        /// <param name="solnPath"></param>
+        public void CreateProject(string projectTemplateFullPath, string projectTargetFramework, string projectName, string solnFullPath = null)
+        {
+            try
+            {
+                if (solnFullPath == null)
+                    solnFullPath = Path.Combine(Environment.CurrentDirectory, "Solution" + DateTime.Now.Ticks.ToString());
+                this.SolutionPath = solnFullPath;
+                Solution2 soln = dteObject.Solution as Solution2;               
+                //setting the project location is required due to Nuget bug # 2917 : http://nuget.codeplex.com/workitem/2917
+                Properties prop = dteObject.Properties["Environment", "ProjectsAndSolution"];
+                prop.Item("ProjectsLocation").Value = Path.GetFullPath(Path.GetDirectoryName(solnFullPath));
+                soln.AddFromTemplate(projectTemplateFullPath + projectTargetFramework, solnFullPath, projectName);
+            }
+            catch (Exception e)
+            {
+                throw new Exception(string.Format("Unable to create project with template {0}. Make sure that the template is valid and the template file exists. Exception message : {1}", projectTemplateFullPath.ToString(), e.Message));
+            }
+        }
+
 
         /// <summary>
         /// Opens an existing solution.
@@ -259,7 +285,7 @@ namespace NuGetTestHelper
         /// <param name="packageId"></param>
         /// <param name="version"></param>
         /// <param name="path"></param>
-        internal bool InstallPackage(string packageId, string version, int timeOut = 10 * 60 * 1000)
+        internal bool InstallPackage(string packageId, string version, int timeOut = 10 * 60 * 1000, bool update=false)
         {
             //Add enough sleeps to let the solution and package manager console to initialize before installing the package.
             System.Threading.Thread.Sleep(10 * 1000);
@@ -267,9 +293,9 @@ namespace NuGetTestHelper
             System.Threading.Thread.Sleep(10 * 1000);
             dteObject.ActiveWindow.Activate();
             //clear existing content from the console.
-            SafeExecuteCommand("View.PackageManagerConsole clear-Host");
+            SafeExecuteCommand("View.PackageManagerConsole clear-Host");           
             //Invoke the install script. Enclosing quotes are required in case if the path contains spaces.
-            string installCommand = @"& "+ @"""" + Path.Combine(Environment.CurrentDirectory, @"Install.ps1") +@""""+  @" " + @"""" + packageId + @"""";// +" -Version " + version + " -pre";
+            string installCommand = @"& "+ @"""" + Path.Combine(Environment.CurrentDirectory, @"Install.ps1") +@""""+  @" " + @"""" + packageId +  @"""" + " " +update.ToString();// +" -Version " + version + " -pre";
             SafeExecuteCommand("View.PackageManagerConsole " + installCommand);
             //Wait till package installation completes or the timeout exceeds.
             int waitTime = 0;
@@ -409,6 +435,8 @@ namespace NuGetTestHelper
         {
             switch (vsVersion)
             {
+                case VSVersion.VS2013:
+                    return VS2013VersionString;
                 case VSVersion.VS2012:
                     return VS2012VersionString;
                 case VSVersion.VS2010:
@@ -456,6 +484,7 @@ namespace NuGetTestHelper
         private const string WDExpressSkUString = "wdexpress";
         private const string VWDExpressSkUString = "vwdexpress";
         private const string Win8ExpressSkUString = "vswinexpress";
+        private const string VS2013VersionString = "12.0";
         private const string VS2012VersionString = "11.0";
         private const string VS2010VersionString = "10.0";
         private const string DTEString = "DTE";
@@ -489,7 +518,8 @@ namespace NuGetTestHelper
     public enum VSVersion
     {
         VS2010,
-        VS2012
+        VS2012,
+        VS2013
     }
 
      /// <summary>
