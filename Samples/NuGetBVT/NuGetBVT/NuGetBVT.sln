@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NuGetBVT", "NuGetBVT\NuGetBVT.csproj", "{B62354D3-B27D-46A9-9E6A-819CF7C4605C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NuGetBVT.Helpers", "NuGetBVT.Helpers\NuGetBVT.Helpers.csproj", "{F91ACD88-FFD1-471B-A60E-D264C7669D6E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C6C0A714-806D-4BFD-8981-69DD63F7C39E}"
+	ProjectSection(SolutionItems) = preProject
+		NuGetBVT.testsettings = NuGetBVT.testsettings
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B62354D3-B27D-46A9-9E6A-819CF7C4605C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B62354D3-B27D-46A9-9E6A-819CF7C4605C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B62354D3-B27D-46A9-9E6A-819CF7C4605C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B62354D3-B27D-46A9-9E6A-819CF7C4605C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F91ACD88-FFD1-471B-A60E-D264C7669D6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F91ACD88-FFD1-471B-A60E-D264C7669D6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F91ACD88-FFD1-471B-A60E-D264C7669D6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F91ACD88-FFD1-471B-A60E-D264C7669D6E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
