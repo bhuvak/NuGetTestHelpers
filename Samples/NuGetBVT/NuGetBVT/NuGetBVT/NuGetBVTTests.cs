@@ -98,7 +98,7 @@ namespace NuGetBVT
             logger.WriteTitle(" {0} {1}", packageId, packageVersion);
             logger.WriteTestCaseResultTableHeader(new string[] { "Scenario", "Result", "Details" });
             foreach (Tuple<string, string, string> result in resultsDict)
-                logger.WriteTestCaseResult(result.Item1, result.Item2, result.Item3);                  
+                logger.WriteTestCaseResult(result.Item1, result.Item2, result.Item3.Replace("<<<<",""));                  
             logger.WriteEnd();
             logger.WriteLog("Check out the TRX file : {0} for more details.", "NugetBvt_" + packageId + ".trx");
             logger.Dispose();
