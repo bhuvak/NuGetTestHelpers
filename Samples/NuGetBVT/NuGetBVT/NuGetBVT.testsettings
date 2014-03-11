@@ -5,6 +5,8 @@
     <DeploymentItem filename="NuGetBVT\Lib\NuGet.exe" />
     <DeploymentItem filename="NuGetBVT\Lib\TestAnalysisRulesExtensions.dll" />
     <DeploymentItem filename="NuGetBVT\Lib\Install.ps1" />
+        <DeploymentItem filename="NuGetBVT\Lib\NuGet.Core.dll" />
+<DeploymentItem filename="NuGetBVT\Lib\Microsoft.Web.XmlTransform.dll" />
   </Deployment>
   <Execution>
     <TestTypeSpecific>

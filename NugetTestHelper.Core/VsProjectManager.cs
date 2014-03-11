@@ -295,7 +295,7 @@ namespace NuGetTestHelper
             //clear existing content from the console.
             SafeExecuteCommand("View.PackageManagerConsole clear-Host");           
             //Invoke the install script. Enclosing quotes are required in case if the path contains spaces.
-            string installCommand = @"& "+ @"""" + Path.Combine(Environment.CurrentDirectory, @"Install.ps1") +@""""+  @" " + @"""" + packageId +  @"""" + " " +update.ToString();// +" -Version " + version + " -pre";
+            string installCommand = @"& " + @"""" + Path.Combine(Environment.CurrentDirectory, @"Install.ps1") + @"""" + @" " + @"""" + packageId + @"""" + " " + @"""" + update.ToString() + @"""";// +" -Version " + version + " -pre";
             SafeExecuteCommand("View.PackageManagerConsole " + installCommand);
             //Wait till package installation completes or the timeout exceeds.
             int waitTime = 0;
