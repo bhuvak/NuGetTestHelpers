@@ -23,7 +23,7 @@ namespace NuGetTestHelper
             string standardOutput = string.Empty;
             string standardError = string.Empty;
             InvokeNugetProcess(string.Join(string.Empty, new string[] { AnalyzeCommandString, @"""", PackageFullPath, @"""" }), out standardError, out standardOutput,null);
-            return standardError;         
+            return String.Format("Output : {0} {1} Error {2}", standardOutput, Environment.NewLine, standardError);
         }             
 
         #region PrivateMethods
@@ -31,7 +31,7 @@ namespace NuGetTestHelper
         private static int InvokeNugetProcess(string arguments, out string standardError, out string standardOutput,string WorkingDir=null)
         {
             Process nugetProcess = new Process();
-            ProcessStartInfo nugetProcessStartInfo = new ProcessStartInfo(Path.Combine(@"C:\Nuget", NugetExePath));
+            ProcessStartInfo nugetProcessStartInfo = new ProcessStartInfo(Path.Combine(Environment.CurrentDirectory, NugetExePath));
             nugetProcessStartInfo.Arguments = arguments;
             nugetProcessStartInfo.RedirectStandardError = true;
             nugetProcessStartInfo.RedirectStandardOutput = true;
