@@ -68,26 +68,34 @@ namespace TestAnalysisRules
             if (issues.Count > 0)
             {
                 Console.WriteLine();
-               // Log all errors as warning till vnext. Need to add a switch to treat all errors as warnings.
+              
                 int warningCount = 0;
                 int errorCount = 0;
                 if (issues.Any(item => item.Level.Equals(PackageIssueLevel.Warning)))
                     warningCount = issues.Where(item => item.Level.Equals(PackageIssueLevel.Warning)).ToList().Count;
                 if (issues.Any(item => item.Level.Equals(PackageIssueLevel.Error)))
                     errorCount = issues.Where(item => item.Level.Equals(PackageIssueLevel.Error)).ToList().Count;
-                if (errorCount > 0)
+                if (errorCount > 0 && warningCount > 0)
                 {
                     Console.WriteLine("ERROR: {0} errors and {1} warnings found with package '{2}'.", errorCount.ToString(), warningCount.ToString(), package.Id);
                 }
+                else if(errorCount > 0)
+                {
+                    Console.WriteLine("ERROR: {0} errors found with package '{1}'.",  errorCount.ToString(), package.Id);
+                }
                 else
                 {
-                    Console.WriteWarning("{0} warnings found with package '{1}'.",  issues.Count.ToString(), package.Id);
-                }
-
+                    Console.WriteWarning("{0} warnings found with package '{1}'.",  warningCount.ToString(), package.Id);
+                }   
+                
                 foreach (var issue in issues)
                 {
                     PrintPackageIssue(issue);
                 }
+            }
+            else
+            {
+                Console.WriteLine("No issues found with package '{0}'.", package.Id);
             }
         }
 

@@ -23,7 +23,7 @@ namespace NuGetTestHelper
             string standardOutput = string.Empty;
             string standardError = string.Empty;
             InvokeNugetProcess(string.Join(string.Empty, new string[] { AnalyzeCommandString, @"""", PackageFullPath, @"""" }), out standardError, out standardOutput,null);
-            return String.Format("Output : {0} {1} Error {2}", standardOutput, Environment.NewLine, standardError);
+            return String.Format(standardOutput + Environment.NewLine + standardError);
         }             
 
         #region PrivateMethods

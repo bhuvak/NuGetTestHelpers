@@ -17,8 +17,7 @@ namespace NuGetPackageValidator
         public static string VSVersionKey = "VSVersion";
         public static string VSSKUKey = "VSSKU";
         public static string FrameworkKey = "Framework";
-        public static string AdditionalPackageSourcesKey = "AdditionalPackageSources";
-        public static string PackageFullPathKey = "PackageFullPath";
+        public static string AdditionalPackageSourcesKey = "AdditionalPackageSources";      
         public static string ProjectTemplateNameKey = "ProjectTemplateName";
         public static string ProjectTemplateFullPathKey = "ProjectTemplateFullPath";
         public static string ProjectTemplateLanguageKey = "ProjectTemplateLanguage";
@@ -32,8 +31,7 @@ namespace NuGetPackageValidator
         public static string VSVersionKeyValue = ConfigurationManager.AppSettings[VSVersionKey];
         public static string VSSKUKeyValue = ConfigurationManager.AppSettings[VSSKUKey];
         public static string FrameworkKeyValue = ConfigurationManager.AppSettings[FrameworkKey];
-        public static string PackageSourceKeyValue = ConfigurationManager.AppSettings[AdditionalPackageSourcesKey];
-        public static string PackageFullPathKeyValue = ConfigurationManager.AppSettings[PackageFullPathKey];
+        public static string PackageSourceKeyValue = ConfigurationManager.AppSettings[AdditionalPackageSourcesKey];      
         public static string ProjectTemplateNameKeyValue = ConfigurationManager.AppSettings[ProjectTemplateNameKey];
         public static string ProjectTemplateFullPathKeyValue = ConfigurationManager.AppSettings[ProjectTemplateFullPathKey];
         public static string ProjectTemplateLanguageKeyValue = ConfigurationManager.AppSettings[ProjectTemplateLanguageKey];

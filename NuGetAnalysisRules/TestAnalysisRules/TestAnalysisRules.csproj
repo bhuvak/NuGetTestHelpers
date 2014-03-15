@@ -51,7 +51,6 @@
     <Compile Include="AnalyzeCommand.cs" />
     <Compile Include="AssemblyHasDocumentFileRule.cs" />
     <Compile Include="AssemblyRule.cs" />
-    <Compile Include="AuthorIsMicrosoftRule.cs" />
     <Compile Include="PowerShellScriptIsSignedRule.cs" />
     <Compile Include="RequiredAttributesRule.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

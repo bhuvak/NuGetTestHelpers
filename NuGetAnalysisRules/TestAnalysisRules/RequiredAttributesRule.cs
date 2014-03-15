@@ -35,7 +35,7 @@ namespace TestAnalysisRules
                     "Icon Url is not set",
                     "This package doesn't have the Icon Url set.",
                     "Set the Icon Url attribute to appropriately.",
-                    PackageIssueLevel.Error);
+                    PackageIssueLevel.Warning);
             }        
 
             if (String.IsNullOrEmpty(package.Tags))
@@ -44,7 +44,7 @@ namespace TestAnalysisRules
                     "Tags attribute is missing",
                     "This package doesn't have the Tags attribute set.",
                     "Set the Tags attribute.",
-                    PackageIssueLevel.Error);
+                    PackageIssueLevel.Warning);
             }
 
             if (String.IsNullOrEmpty(package.Title))
@@ -53,7 +53,7 @@ namespace TestAnalysisRules
                     "Title attribute is missing",
                     "This package doesn't have the Title attribute set.",
                     "Set the Title attribute.",
-                    PackageIssueLevel.Error);
+                    PackageIssueLevel.Warning);
             }
 
             if (String.IsNullOrEmpty(package.Summary))
@@ -62,7 +62,7 @@ namespace TestAnalysisRules
                     "Summary attribute is missing",
                     "This package doesn't have the Summary attribute set.",
                     "Set the Summary attribute.",
-                    PackageIssueLevel.Error);
+                    PackageIssueLevel.Warning);
             }
 
             if (package.ProjectUrl == null)

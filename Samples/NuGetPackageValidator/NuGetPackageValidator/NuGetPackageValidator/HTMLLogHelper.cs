@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Web.UI;
+using System.Collections.Specialized;
+using System.Collections;
 
 namespace NuGetPackageValidator
 {
@@ -93,6 +95,11 @@ namespace NuGetPackageValidator
         public void WriteTestCaseResult(string scenario, string result,string details)
         {
             AddHtmlTableRowForTestCaseResult(scenario, result,details);
+        }
+
+        public void WriteTestCaseResultWithoutLink(string scenario, string result, string details)
+        {
+            AddHtmlTableRowForTestCaseResultWithOutLinks(scenario, result, details);
         }
 
         public void WriteTestCaseResultTableHeader(string[] headers)
@@ -221,7 +228,7 @@ namespace NuGetPackageValidator
             AddHtmlTable(tableValues);
         }
 
-        public void WriteSummary(int errorCount, int warningCount)
+        public void WriteSummary()
         {
             StringBuilder builder = new StringBuilder();
             htmlWriter.Write(@"<script type=""text/javascript"">
@@ -237,12 +244,8 @@ function Toggle(arg1,arg2) {
         link.text = ""Hide details"";
 	}
 }
-</script>");
-            builder.AppendLine(@"<div id=""result"" style=""visibility: hidden"">");
-            builder.AppendLine(@"<span id=""totalerrors"">" + errorCount + @"</span> ");
-            builder.AppendLine(@"<span id=""totalwarnings"">" + warningCount + @"</span>");
-            builder.AppendLine(@"</div>");
-            htmlWriter.Write(builder.ToString());
+</script>");         
+          
         }
 
         private void BeginTestCaseResultTable(string[] headers)
@@ -267,11 +270,9 @@ function Toggle(arg1,arg2) {
             htmlWriter.RenderBeginTag(HtmlTextWriterTag.Td);
             htmlWriter.Write(col1);
             htmlWriter.RenderEndTag();
-            string bgcolor = "red";
-            if (col2.Equals("Not Executed", StringComparison.OrdinalIgnoreCase))
-                bgcolor = "yellow";
-            if (col2.Equals("Passed", StringComparison.OrdinalIgnoreCase))
-                bgcolor = "green";
+            string bgcolor = "green";           
+            if (col2.Contains("Failed"))
+                bgcolor = "red";
             htmlWriter.AddAttribute(HtmlTextWriterAttribute.Bgcolor, bgcolor);
             htmlWriter.RenderBeginTag(HtmlTextWriterTag.Td);
             htmlWriter.Write(col2);
@@ -293,6 +294,29 @@ function Toggle(arg1,arg2) {
             htmlWriter.RenderEndTag();
             htmlWriter.RenderEndTag();
             htmlWriter.RenderEndTag();
+            htmlWriter.WriteLine("");
+        }
+
+        private void AddHtmlTableRowForTestCaseResultWithOutLinks(string col1, string col2, string col3 = null)
+        {
+            htmlWriter.RenderBeginTag(HtmlTextWriterTag.Tr);
+            htmlWriter.RenderBeginTag(HtmlTextWriterTag.Td);
+            htmlWriter.Write(col1);
+            htmlWriter.RenderEndTag();
+            string bgcolor = "green";
+            if (col2.Contains("Failed"))
+                bgcolor = "red";
+            htmlWriter.AddAttribute(HtmlTextWriterAttribute.Bgcolor, bgcolor);
+            htmlWriter.RenderBeginTag(HtmlTextWriterTag.Td);
+            htmlWriter.Write(col2);
+            htmlWriter.RenderEndTag();
+            htmlWriter.RenderBeginTag(HtmlTextWriterTag.Td);
+            htmlWriter.AddAttribute(HtmlTextWriterAttribute.Href, col3);
+            htmlWriter.RenderBeginTag(HtmlTextWriterTag.A);
+            htmlWriter.Write(col3);
+            htmlWriter.RenderEndTag();
+            htmlWriter.RenderEndTag();
+            htmlWriter.RenderEndTag();           
             htmlWriter.WriteLine("");
         }
 
@@ -327,8 +351,8 @@ function Toggle(arg1,arg2) {
         #endregion PrivateMethods
 
         private StreamWriter _streamWriter;
-        private StringWriter stringwriter;
-        private HtmlTextWriter htmlWriter;
+        public StringWriter stringwriter;
+        protected HtmlTextWriter htmlWriter;
         private StreamWriter FileWriter
         {
             get

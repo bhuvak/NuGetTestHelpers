@@ -9,6 +9,7 @@ using NuGet;
 using System.IO;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
+using System.Configuration;
 
 namespace NuGetPackageValidator
 {
@@ -21,174 +22,104 @@ namespace NuGetPackageValidator
     public class Program
     {
         public static TestMode currentMode = TestMode.All;
-        private static string packageId = string.Empty;
-        private static string packageVersion = string.Empty;
-        private static string packagePath = string.Empty;
-        private static string projName = string.Empty;
-        private static string TestRunPath = string.Empty;
-        private static List<Tuple<string, string, string>> resultsDict = new List<Tuple<string, string, string>>();
-        private static int errorCount = 0;
-        private static int warningCount = 0;
-        private static VSVersion vsVersion = VSVersion.VS2012;
-        private static VSSKU vsSKU = VSSKU.VSU;       
+        public static List<Tuple<string, string, string>> resultsDict = new List<Tuple<string, string, string>>();
         public static void Main(string[] args)
         {
-           
-            if(args.Length > 0)
+            List<string> listOfPackages = new List<string>();
+            try
             {
-               AppSettingsHelper.PackageFullPathKeyValue =  args[0];               
-            }           
-            Initialize();
-            
-            if(args.Length > 1)
+                if (args.Length == 0 || args[0].Equals("help", StringComparison.OrdinalIgnoreCase) || args[0].Equals("/?", StringComparison.OrdinalIgnoreCase))
+                {
+                    PrintHelp();
+                    return;
+                }
+
+                if (args.Length > 1)
+                {
+                    string[] testmodevalues = args[1].Split(new char[] { ':' });
+                    if (Enum.TryParse<TestMode>(testmodevalues[1],true, out currentMode))
+                        currentMode = (TestMode)Enum.Parse(typeof(TestMode), testmodevalues[1],true);
+                }
+            }catch(Exception e)
             {
-               string[] testmodevalues =  args[1].Split(new char[] { ':' });
-               if(Enum.TryParse<TestMode>(testmodevalues[1], out currentMode))
-                   currentMode= (TestMode)Enum.Parse(typeof(TestMode),testmodevalues[1]);
+                Console.WriteLine("Error processing input arguments. Use Help command for more details and make sure you pass a valid folder location or .nupkg file as argument. Exception message : {0}",e.Message);
+                //Environment.Exit(-1);
+                return;
             }
 
-            if(currentMode == TestMode.All)
+            try
             {
-                InstallPackage(packagePath);
-                StaticAnalysis();                
+                listOfPackages = GetListofPackageFileNames(args[0]);
+            }catch(Exception e)
+            {
+                Console.WriteLine("Error in getting the list of .nupkg files from the input parameter {0}. Please check the input values. Exception message : {1}", args[0], e.Message);
             }
-            if(currentMode == TestMode.Analyze)
+            foreach(string package in listOfPackages)
             {
-                StaticAnalysis();
-            }
-            if(currentMode == TestMode.Install)
-            {
-                InstallPackage(packagePath);
+                try
+                {
+                    string output = string.Empty;
+                    string resultPath = string.Empty;
+                    ValidatePackage validator = new ValidatePackage();
+                    validator.Execute(package, currentMode,out output,out resultPath);
+                    resultsDict.Add(new Tuple<string, string, string>(new ZipPackage(package).Id,output, resultPath));
+                }catch(Exception e)
+                {
+                    Console.WriteLine("Error while validating package {0}. Exception message {1}. Stack trace : {2}", package, e.Message, e.StackTrace);
+                }
             }
 
-            DumpLogs();
-        }
+            DumpLog();
+          
+        }  
 
-        public static void DumpLogs()
-        {      
-
-            HTMLLogger logger = new HTMLLogger(Path.Combine(TestRunPath, packageId + ".htm"));
-            logger.WriteSummary(errorCount, warningCount);
-            logger.WriteTitle(" {0} {1}", packageId, packageVersion);
-            logger.WriteTestCaseResultTableHeader(new string[] { "Scenario", "Result", "Details" });
+        public static void DumpLog()
+        {
+            HTMLLogger logger = new HTMLLogger(Path.Combine(AppSettingsHelper.TestResultsPathKeyValue,"Consolidated" + ".htm"));           
+            logger.WriteTitle(" Consolidated report for NuGet package validation");
+            logger.WriteTestCaseResultTableHeader(new string[] { "Package", "Result", "Result file Path" });
             foreach (Tuple<string, string, string> result in resultsDict)
-                logger.WriteTestCaseResult(result.Item1, result.Item2, result.Item3.Replace("<<<<", ""));
-            logger.WriteEnd();         
+            {
+                logger.WriteTestCaseResultWithoutLink(result.Item1, result.Item2, result.Item3);                
+            }
+            logger.WriteEnd();
+            if(!string.IsNullOrEmpty(ConfigurationManager.AppSettings["SmtpUserName"]) && !string.IsNullOrEmpty(ConfigurationManager.AppSettings["SmtpPassword"]) && !string.IsNullOrEmpty(ConfigurationManager.AppSettings["MailRecepientAddress"]))
+              MailHelper.SendMail(logger.stringwriter.ToString());
             logger.Dispose();
         }
 
-        private static void Initialize()
+        public static void PrintHelp()
         {
-            //extract package id and version.
-            packagePath = AppSettingsHelper.PackageFullPathKeyValue;
-          
-            ZipPackage zipPackage = new ZipPackage(packagePath);
-            packageId = zipPackage.Id;
-            packageVersion = zipPackage.Version.ToString();
+            Console.WriteLine("");
+            Console.WriteLine("Usage : NuGetPackageValidator <Path to the Package> [-testmode:install|static|all]");
+            Console.WriteLine("");
+            Console.WriteLine("Path to Package : Full path to a single nupkg file or full path pointing to a folder having a setting a nupkg files.");
+            Console.WriteLine("");
+            Console.WriteLine(@"Example: \\fc-fileserv\Mypackage.1.0.0.nupkg , C:\Packages");
+            Console.WriteLine("");
+            Console.WriteLine("Test mode : This is optional parameter. Specify 'install' if you want to run only package installation test and 'static' if you want to run only static analysis tests");
+            Console.WriteLine("Default value is 'All' and both of them will be run");
+        }
 
-            //set package sources.
-            string PackageSource = Path.GetDirectoryName(packagePath);
-            if (string.IsNullOrEmpty(PackageSource))
-                PackageSource = Environment.CurrentDirectory;
-            IList<KeyValuePair<string, string>> sources = new List<KeyValuePair<string, string>>();
-            sources.Add(new KeyValuePair<string, string>("TestSource", PackageSource));
-            //If additional sources are specified in the app.config file, add them too.
-            if (!string.IsNullOrEmpty(AppSettingsHelper.PackageSourceKeyValue))
+        private static List<string> GetListofPackageFileNames(string inputPath)
+        {
+            List<string> listOfPackages = new List<string>();
+            string fileExt = Path.GetExtension(inputPath);
+            if(string.IsNullOrEmpty(fileExt))
             {
-                string[] additionalPackageSources = AppSettingsHelper.PackageSourceKeyValue.Split(new char[] { ',', ';' });
-                int i = 1;
-                foreach (string additionalSource in additionalPackageSources)
-                {
-                    sources.Add(new KeyValuePair<string, string>("AdditionalSources_" + i.ToString(), additionalSource));
-                    i++;
-                }
+                listOfPackages = Directory.GetFiles(inputPath, "*.nupkg", SearchOption.TopDirectoryOnly).ToList();
             }
-            NugetSettingsUtility.SetPackageSources(sources);
-            NugetSettingsUtility.SetActivePackageSource("TestSource", PackageSource);
-
-            //Set test run directory.
-            if (string.IsNullOrEmpty(AppSettingsHelper.TestResultsPathKeyValue))
-                TestRunPath = Path.Combine(Environment.CurrentDirectory, packageId);
+            else if(fileExt.Equals(".nupkg"))
+            {
+                listOfPackages.Add(inputPath);
+            }
             else
-                TestRunPath = AppSettingsHelper.TestResultsPathKeyValue;
-            //Create root level test run Dir
-            if (!Directory.Exists(TestRunPath))
             {
-                Directory.CreateDirectory(TestRunPath);
+                throw new ArgumentException("Not a valid nupkg file specified");
             }
-
-            //initialize other values.
-            projName = DateTime.Now.Ticks.ToString();
-            vsVersion = (VSVersion)Enum.Parse(typeof(VSVersion), AppSettingsHelper.VSVersionKeyValue, true);
-            vsSKU = (VSSKU)Enum.Parse(typeof(VSSKU), AppSettingsHelper.VSSKUKeyValue, true);
-
+            if (listOfPackages == null || listOfPackages.Count == 0)
+                throw new ArgumentException("The specified directory doesn't have any nupkg files at the root level");
+            return listOfPackages;
         }
-
-        private static void InstallPackage(string packagePath, bool updateAll = false)
-        {
-            using (NuGetPackageTestHelper nugetHelper = new NuGetPackageTestHelper())
-            {
-                //nugetHelper.vsProjectManager.CloseAllSkus();
-                //Launch appropriate version of VS and SKU
-                nugetHelper.vsProjectManager.LaunchVS(vsVersion, vsSKU);
-                //Create project with desired template and framework.
-                if (string.IsNullOrEmpty(AppSettingsHelper.ProjectTemplateFullPathKeyValue))
-                {
-                    nugetHelper.vsProjectManager.CreateProject(AppSettingsHelper.ProjectTemplateNameKeyValue, AppSettingsHelper.ProjectTemplateLanguageKeyValue, ProjectTargetFrameworks.Net45, projName, Path.Combine(TestRunPath, DateTime.Now.Ticks.ToString()));
-                }
-                else
-                {
-                    nugetHelper.vsProjectManager.CreateProject(AppSettingsHelper.ProjectTemplateFullPathKeyValue, ProjectTargetFrameworks.Net45, projName, Path.Combine(TestRunPath, DateTime.Now.Ticks.ToString()));
-                }
-                string packageInstallOutput = string.Empty;
-                //Install package and get output.
-                bool installPassed = nugetHelper.nuGetPackageManager.InstallPackage(packagePath, out packageInstallOutput, updateAll);
-                Console.WriteLine("Output from package installation :{0} {1}", Environment.NewLine, packageInstallOutput);
-
-                //Get output from individual verifiers.
-                bool individualVerifierResults = true;
-                StringBuilder resultString = new StringBuilder();
-                foreach (var verifier in nugetHelper.PackageInstallationVerifiers)
-                {
-                    bool? passed = verifier.Value.Validate(packagePath, nugetHelper.vsProjectManager);
-                    if (!passed.HasValue)
-                        continue;
-                    else
-                    {
-                        resultString.AppendFormat("Output from {0} :", verifier.Metadata.Name);
-                        if (passed == true)
-                            resultString.AppendLine(verifier.Value.Output);
-                        if (passed == false)
-                        {
-                            individualVerifierResults = false;
-                            resultString.AppendLine(verifier.Value.Error);
-                        }
-                    }
-                }
-                Console.WriteLine(resultString.ToString());                
-                nugetHelper.vsProjectManager.CloseSolution();               
-                resultsDict.Add(new Tuple<string,string,string>("Install From VS", installPassed ? "Passed": "Failed", packageInstallOutput + Environment.NewLine + "Output from individual verifiers :" + Environment.NewLine + resultString));
-
-            }
-        }
-
-        private static void StaticAnalysis()
-        {
-            using (NuGetPackageTestHelper nugetHelper = new NuGetPackageTestHelper())
-            {
-                //Analyze package and verify package installtion
-                bool analysisPassed = true;
-                string analysisOutput = nugetHelper.nuGetPackageManager.AnalyzePackage(packagePath);               
-                Console.WriteLine("Output from package Analysis :{0}", analysisOutput);
-                if (!string.IsNullOrEmpty(analysisOutput))
-                {
-                    string summaryLine = analysisOutput.Substring(0, analysisOutput.IndexOf(" found with package '"));
-                    warningCount = Convert.ToInt32(summaryLine.Substring(summaryLine.IndexOf("warnings") - 3, 2).Trim());
-                    analysisPassed = !summaryLine.Contains("errors");
-                }
-                resultsDict.Add(new Tuple<string, string, string>("Static analysis", analysisPassed ? "Passed" : "Failed", analysisOutput));
-            }
-        }
-
     }
 }
