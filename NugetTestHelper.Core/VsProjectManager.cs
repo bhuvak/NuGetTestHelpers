@@ -42,7 +42,7 @@ namespace NuGetTestHelper
         /// </summary>
         public void CloseAllSkus()
         {
-            Console.WriteLine("Closing all instances Open instances of VS to avoid stale instances..");
+          
             try
             {
                 System.Diagnostics.Process[] allProcesses = System.Diagnostics.Process.GetProcesses();
@@ -56,7 +56,7 @@ namespace NuGetTestHelper
             }
             catch (Exception e)
             {
-                Console.WriteLine("Exception while killing devenv.exe", e.Message);
+              //  Console.WriteLine("Exception while killing devenv.exe", e.Message);
             }
         }
 
@@ -399,7 +399,7 @@ namespace NuGetTestHelper
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e.Message);
+                   // Console.WriteLine(e.Message);
                     System.Threading.Thread.Sleep(5 * 1000);
                 }
             }

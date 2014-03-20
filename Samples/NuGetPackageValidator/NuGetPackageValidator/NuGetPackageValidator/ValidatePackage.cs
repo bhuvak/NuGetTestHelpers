@@ -51,17 +51,24 @@ namespace NuGetPackageValidator
         {
             StringBuilder resultOverview = new StringBuilder();
             testResultPath = Path.Combine(TestRunPath, packageId + ".htm");
-            HTMLLogger logger = new HTMLLogger(testResultPath);
-            logger.WriteSummary();
-            logger.WriteTitle(" {0} {1}", packageId, packageVersion);
-            logger.WriteTestCaseResultTableHeader(new string[] { "Scenario", "Result", "Details" });
+            HTMLLogger logger = new HTMLLogger();
+            logger.WriteSummary();        
+            logger.WriteTestCaseResultTableHeader(new string[] { "Scenario", "Result", "Details" },true);
             foreach (Tuple<string, string, string> result in resultsDict)
             {
                 logger.WriteTestCaseResult(result.Item1, result.Item2, result.Item3.Replace("<<<<", ""));
-                resultOverview.AppendFormat("{0} : {1} ;", result.Item1, result.Item2);
-            }
-            logger.WriteEnd();
-            logger.Dispose();
+                resultOverview.AppendFormat("{0}:{1}; ", result.Item1, result.Item2);
+            }        
+            StreamReader sr = new StreamReader("PackageResultsTemplate.htm");
+            string body = sr.ReadToEnd();
+            sr.Close();
+            body = body.Replace("{Rows}", logger.stringwriter.ToString());
+            body = body.Replace("{PackageID}", packageId);
+
+            StreamWriter sw = new StreamWriter(testResultPath);
+            sw.Write(body);
+            sw.Flush();
+            sw.Close();
             return resultOverview.ToString();
         }
 
@@ -116,22 +123,31 @@ namespace NuGetPackageValidator
             {
                 using (NuGetPackageTestHelper nugetHelper = new NuGetPackageTestHelper())
                 {
-                    //nugetHelper.vsProjectManager.CloseAllSkus();
+                    if (AppSettingsHelper.CloseAllSKUsKeyValue.Equals("true", StringComparison.OrdinalIgnoreCase))
+                    {
+                        nugetHelper.vsProjectManager.CloseAllSkus();
+                    }                
                     //Launch appropriate version of VS and SKU
                     nugetHelper.vsProjectManager.LaunchVS(vsVersion, vsSKU);
                     //Create project with desired template and framework.
-                    if (string.IsNullOrEmpty(AppSettingsHelper.ProjectTemplateFullPathKeyValue))
+                    try
                     {
-                        nugetHelper.vsProjectManager.CreateProject(AppSettingsHelper.ProjectTemplateNameKeyValue, AppSettingsHelper.ProjectTemplateLanguageKeyValue, ProjectTargetFrameworks.Net45, projName, Path.Combine(TestRunPath, DateTime.Now.Ticks.ToString()));
-                    }
-                    else
-                    {
-                        nugetHelper.vsProjectManager.CreateProject(AppSettingsHelper.ProjectTemplateFullPathKeyValue, ProjectTargetFrameworks.Net45, projName, Path.Combine(TestRunPath, DateTime.Now.Ticks.ToString()));
+                        if (string.IsNullOrEmpty(AppSettingsHelper.ProjectTemplateFullPathKeyValue))
+                        {
+                            nugetHelper.vsProjectManager.CreateProject(AppSettingsHelper.ProjectTemplateNameKeyValue, AppSettingsHelper.ProjectTemplateLanguageKeyValue, ProjectTargetFrameworks.Net45, projName, Path.Combine(TestRunPath, DateTime.Now.Ticks.ToString()));
+                        }
+                        else
+                        {
+                            nugetHelper.vsProjectManager.CreateProject(AppSettingsHelper.ProjectTemplateFullPathKeyValue, ProjectTargetFrameworks.Net45, projName, Path.Combine(TestRunPath, DateTime.Now.Ticks.ToString()));
+                        }
+                    }catch(Exception e)
+                    {                        
+                        throw new ArgumentException(string.Format("Error while creating project out of template {0} for package {1}.Make sure that the template name is specified properly", AppSettingsHelper.ProjectTemplateNameKeyValue, packagePath));
                     }
                     string packageInstallOutput = string.Empty;
                     //Install package and get output.
                     bool installPassed = nugetHelper.nuGetPackageManager.InstallPackage(packagePath, out packageInstallOutput, updateAll);
-                    Console.WriteLine("Output from package installation :{0} {1}", Environment.NewLine, packageInstallOutput);
+                  
 
                     //Get output from individual verifiers.
                     bool individualVerifierResults = true;
@@ -153,14 +169,14 @@ namespace NuGetPackageValidator
                             }
                         }
                     }
-                    Console.WriteLine(resultString.ToString());
+                  
                     nugetHelper.vsProjectManager.CloseSolution();
-                    resultsDict.Add(new Tuple<string, string, string>("Install From VS", installPassed ? "Passed" : "Failed", packageInstallOutput + Environment.NewLine + "Output from individual verifiers :" + Environment.NewLine + resultString));
+                    resultsDict.Add(new Tuple<string, string, string>("Install", installPassed ? "Passed" : "Failed", packageInstallOutput + Environment.NewLine + "Output from individual verifiers :" + Environment.NewLine + resultString));
 
                 }
             }catch(Exception e)
             {
-                 resultsDict.Add(new Tuple<string, string, string>("Install from VS", "Failed",string.Format("Error while installing package from VS. Message {0} {1} Stack track {2}", e.Message,Environment.NewLine,e.StackTrace)));
+                 resultsDict.Add(new Tuple<string, string, string>("Install", "Failed",string.Format("Error while installing package from VS. Message {0} {1} Stack track {2}", e.Message,Environment.NewLine,e.StackTrace)));
             }
         }
 
@@ -173,16 +189,16 @@ namespace NuGetPackageValidator
                     //Analyze package and verify package installtion
                     bool analysisPassed = true;
                     string analysisOutput = nugetHelper.nuGetPackageManager.AnalyzePackage(packagePath);
-                    Console.WriteLine("Output from package Analysis :{0}", analysisOutput);
+                  
                     if (!string.IsNullOrEmpty(analysisOutput))
                     {
                         analysisPassed = !analysisOutput.Contains("ERROR: ");                        
                     }
-                    resultsDict.Add(new Tuple<string, string, string>("Static analysis", analysisPassed ? "Passed" : "Failed", analysisOutput));
+                    resultsDict.Add(new Tuple<string, string, string>("StaticAnalysis", analysisPassed ? "Passed" : "Failed", analysisOutput));
                 }
             }catch(Exception e)
             {
-                resultsDict.Add(new Tuple<string, string, string>("Static analysis", "Failed",string.Format("Error while running static analysis. Message {0} {1} Stack track {2}", e.Message,Environment.NewLine,e.StackTrace)));
+                resultsDict.Add(new Tuple<string, string, string>("StaticAnalysis", "Failed",string.Format("Error while running static analysis. Message {0} {1} Stack track {2}", e.Message,Environment.NewLine,e.StackTrace)));
             }
         } 
 

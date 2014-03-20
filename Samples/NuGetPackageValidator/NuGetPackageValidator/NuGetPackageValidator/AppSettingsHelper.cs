@@ -16,6 +16,7 @@ namespace NuGetPackageValidator
         //AppSettings Keys.
         public static string VSVersionKey = "VSVersion";
         public static string VSSKUKey = "VSSKU";
+        public static string CloseAllSKUsKey = "CloseAllSkUs";
         public static string FrameworkKey = "Framework";
         public static string AdditionalPackageSourcesKey = "AdditionalPackageSources";      
         public static string ProjectTemplateNameKey = "ProjectTemplateName";
@@ -30,6 +31,7 @@ namespace NuGetPackageValidator
         //AppSetting values.
         public static string VSVersionKeyValue = ConfigurationManager.AppSettings[VSVersionKey];
         public static string VSSKUKeyValue = ConfigurationManager.AppSettings[VSSKUKey];
+        public static string CloseAllSKUsKeyValue = ConfigurationManager.AppSettings[CloseAllSKUsKey];
         public static string FrameworkKeyValue = ConfigurationManager.AppSettings[FrameworkKey];
         public static string PackageSourceKeyValue = ConfigurationManager.AppSettings[AdditionalPackageSourcesKey];      
         public static string ProjectTemplateNameKeyValue = ConfigurationManager.AppSettings[ProjectTemplateNameKey];

@@ -10,19 +10,19 @@ using System.Collections;
 
 namespace NuGetPackageValidator
 {
-    public class HTMLLogger : IDisposable
+    public class HTMLLogger 
     {
         /// <summary>
         /// Creates log file with the specified full path.
         /// </summary>
         /// <param name="fileName"></param>
-        public HTMLLogger(string fileName)
+        public HTMLLogger()
         {
             stringwriter = new StringWriter();
             htmlWriter = new HtmlTextWriter(stringwriter);
-            if (File.Exists(fileName))
-                File.Delete(fileName);
-            _streamWriter = new StreamWriter(fileName);
+            //if (File.Exists(fileName))
+            //    File.Delete(fileName);
+            //_streamWriter = new StreamWriter(fileName);
 
         }
 
@@ -102,9 +102,9 @@ namespace NuGetPackageValidator
             AddHtmlTableRowForTestCaseResultWithOutLinks(scenario, result, details);
         }
 
-        public void WriteTestCaseResultTableHeader(string[] headers)
+        public void WriteTestCaseResultTableHeader(string[] headers,bool headersOnly=false)
         {
-            BeginTestCaseResultTable(headers);
+            BeginTestCaseResultTable(headers,headersOnly);
         }
 
         public void Write(string message)
@@ -116,12 +116,12 @@ namespace NuGetPackageValidator
         {
             EndTag();
         }
-        public void Dispose()
-        {
-            FileWriter.Write(stringwriter.ToString());
-            FileWriter.Flush();
-            FileWriter.Close();
-        }
+        //public void Dispose()
+        //{
+        //    FileWriter.Write(stringwriter.ToString());
+        //    FileWriter.Flush();
+        //    FileWriter.Close();
+        //}
 
         #region PrivateMethods
 
@@ -248,10 +248,14 @@ function Toggle(arg1,arg2) {
           
         }
 
-        private void BeginTestCaseResultTable(string[] headers)
+        private void BeginTestCaseResultTable(string[] headers,bool headerOnly)
         {
-            htmlWriter.AddAttribute(HtmlTextWriterAttribute.Border, "1");
-            htmlWriter.RenderBeginTag(HtmlTextWriterTag.Table);
+            if (!headerOnly)
+            {
+                htmlWriter.AddAttribute(HtmlTextWriterAttribute.Border, "1");
+                htmlWriter.RenderBeginTag(HtmlTextWriterTag.Table);
+            }
+
             htmlWriter.RenderBeginTag(HtmlTextWriterTag.Tr);
             foreach (string header in headers)
             {
@@ -259,8 +263,12 @@ function Toggle(arg1,arg2) {
                 htmlWriter.Write(header);
                 htmlWriter.RenderEndTag();
             }
-            htmlWriter.RenderEndTag();
-            htmlWriter.WriteLine("");
+
+            if (!headerOnly)
+            {
+                htmlWriter.RenderEndTag();
+                htmlWriter.WriteLine("");
+            }
 
         }
 
