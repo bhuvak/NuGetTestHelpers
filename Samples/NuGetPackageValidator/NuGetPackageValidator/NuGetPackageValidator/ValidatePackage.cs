@@ -20,13 +20,14 @@ namespace NuGetPackageValidator
         private string projName = string.Empty;
         private string TestRunPath = string.Empty;
         private List<Tuple<string, string, string>> resultsDict = new List<Tuple<string, string, string>>();
+        private Tuple<string, string> errors = null;
         private VSVersion vsVersion = VSVersion.VS2012;
         private VSSKU vsSKU = VSSKU.VSU;
         private string testResultPath = string.Empty;
-        public  void Execute(string packageFullPath, TestMode  currentMode,out string output,out string resultsPath)
+        public void Execute(string packageFullPath, TestMode currentMode, out string output, out Tuple<string, string> outErrors, out string resultsPath)
         {
             packagePath = packageFullPath;
-            Initialize(packageFullPath);         
+            Initialize(packageFullPath);
 
             if (currentMode == TestMode.All)
             {
@@ -43,6 +44,9 @@ namespace NuGetPackageValidator
             }
 
             output = DumpLogs();
+
+            outErrors = errors;
+
             resultsPath = testResultPath;
             
         }
@@ -194,6 +198,12 @@ namespace NuGetPackageValidator
                     {
                         analysisPassed = !analysisOutput.Contains("ERROR: ");                        
                     }
+
+                    if (!analysisPassed)
+                    {
+                        errors = new Tuple<string, string> ("Static Analysis Failed", analysisOutput);
+                    }
+
                     resultsDict.Add(new Tuple<string, string, string>("StaticAnalysis", analysisPassed ? "Passed" : "Failed", analysisOutput));
                 }
             }catch(Exception e)
