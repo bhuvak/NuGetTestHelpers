@@ -24,6 +24,8 @@ namespace NuGetPackageValidator
     {
         public static TestMode currentMode = TestMode.All;
         public static List<Tuple<string, string, string>> resultsDict = new List<Tuple<string, string, string>>();
+        public static List<Tuple<string, string>> errorsDict = new List<Tuple<string, string>>();
+
         public static void Main(string[] args)
         {
             List<string> listOfPackages = new List<string>();
@@ -67,9 +69,12 @@ namespace NuGetPackageValidator
                 {
                     string output = string.Empty;
                     string resultPath = string.Empty;
+                    Tuple<string, string> errors = null;
                     ValidatePackage validator = new ValidatePackage();              
-                    validator.Execute(package, currentMode,out output,out resultPath);
-                    resultsDict.Add(new Tuple<string, string, string>(new ZipPackage(package).Id,output, resultPath));                    
+                    validator.Execute(package, currentMode,out output,out errors, out resultPath);
+                    if (errors != null)
+                        errorsDict.Add(new Tuple<string, string>(new ZipPackage(package).Id, errors.Item2));
+                    resultsDict.Add(new Tuple<string, string, string>(new ZipPackage(package).Id,output, resultPath));
                     Console.WriteLine("{0}{1,60}", new ZipPackage(package).Id, output);
                 }catch(Exception e)
                 {
@@ -78,6 +83,8 @@ namespace NuGetPackageValidator
             }     
         
             DumpLog();
+            DumpErrorLog();
+
             Console.WriteLine("");
             Console.WriteLine("{0,10}Test run complete. Consolidated result will be found @ {1}", "", Path.Combine(AppSettingsHelper.TestResultsPathKeyValue, "Consolidated.htm"));
         }  
@@ -102,6 +109,26 @@ namespace NuGetPackageValidator
             sw.Close();
         }
 
+        public static void DumpErrorLog()
+        {
+            HTMLLogger logger = new HTMLLogger();
+
+            foreach (Tuple<string, string> error in errorsDict)
+            {
+                logger.WriteHeader(error.Item1);
+                logger.WriteError(error.Item2);
+            }
+
+            StreamReader sr = new StreamReader("ConsolidatedErrorsTemplate.htm");
+            string body = sr.ReadToEnd();
+            sr.Close();
+            body = body.Replace("{Rows}", logger.stringwriter.ToString());
+            StreamWriter sw = new StreamWriter(Path.Combine(AppSettingsHelper.TestResultsPathKeyValue, "ConsolidatedErrors" + ".htm"));
+            sw.Write(body);
+            sw.Flush();
+            sw.Close();
+        }
+
         public static void PrintHelp()
         {
             Console.WriteLine("");
@@ -121,7 +148,7 @@ namespace NuGetPackageValidator
             string fileExt = Path.GetExtension(inputPath);
             if(string.IsNullOrEmpty(fileExt))
             {
-                listOfPackages = Directory.GetFiles(inputPath, "*.nupkg", SearchOption.TopDirectoryOnly).ToList();
+                listOfPackages = Directory.GetFiles(inputPath, "*.nupkg", SearchOption.AllDirectories).ToList();
             }
             else if(fileExt.Equals(".nupkg"))
             {
