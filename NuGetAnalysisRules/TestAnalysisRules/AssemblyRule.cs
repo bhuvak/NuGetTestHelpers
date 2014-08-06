@@ -89,7 +89,7 @@ namespace TestAnalysisRules
                     if (hasSignedIssue)
                     {                       
                             yield return new PackageIssue(
-                                "Assembly is not signed",
+                                "Assembly not strongname signed",
                                 "The assembly '" + assemblyFile.Path + "' in this package is either not signed or delay signed.",
                                 "Strong name sign this assembly.",
                                 PackageIssueLevel.Error);

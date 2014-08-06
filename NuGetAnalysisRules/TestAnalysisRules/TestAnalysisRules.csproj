@@ -51,10 +51,12 @@
     <Compile Include="AnalyzeCommand.cs" />
     <Compile Include="AssemblyHasDocumentFileRule.cs" />
     <Compile Include="AssemblyRule.cs" />
+    <Compile Include="AuthenticodeSigningRule.cs" />
     <Compile Include="PowerShellScriptIsSignedRule.cs" />
     <Compile Include="RequiredAttributesRule.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SatellitePackageRule.cs" />
+    <Compile Include="WinTrust.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
