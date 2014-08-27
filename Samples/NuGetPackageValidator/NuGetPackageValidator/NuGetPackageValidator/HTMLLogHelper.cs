@@ -272,6 +272,27 @@ function Toggle(arg1,arg2) {
 
         }
 
+        public void AddHtmlTableRowForStaticAnalysisReport(string[] result)
+        {
+            htmlWriter.RenderBeginTag(HtmlTextWriterTag.Tr);
+
+            foreach (string each in result)
+            {
+                if (each != result[0])
+                {
+                    string bgcolor = "green";
+                    if (each.Contains("Failed"))
+                        bgcolor = "red";
+                    htmlWriter.AddAttribute(HtmlTextWriterAttribute.Bgcolor, bgcolor);
+                }
+                htmlWriter.RenderBeginTag(HtmlTextWriterTag.Td);
+                htmlWriter.Write(each);
+                htmlWriter.RenderEndTag();
+            }
+            htmlWriter.RenderEndTag();
+            htmlWriter.WriteLine("");
+        }
+
         private void AddHtmlTableRowForTestCaseResult(string col1, string col2,string col3=null)
         {
             htmlWriter.RenderBeginTag(HtmlTextWriterTag.Tr);

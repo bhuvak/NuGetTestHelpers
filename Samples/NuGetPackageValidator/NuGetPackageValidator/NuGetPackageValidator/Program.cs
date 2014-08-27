@@ -84,6 +84,7 @@ namespace NuGetPackageValidator
         
             DumpLog();
             DumpErrorLog();
+            DumpStaticAnalysisReport();
 
             Console.WriteLine("");
             Console.WriteLine("{0,10}Test run complete. Consolidated result will be found @ {1}", "", Path.Combine(AppSettingsHelper.TestResultsPathKeyValue, "Consolidated.htm"));
@@ -92,7 +93,7 @@ namespace NuGetPackageValidator
         public static void DumpLog()
         {
             HTMLLogger logger = new HTMLLogger();                  
-            logger.WriteTestCaseResultTableHeader(new string[] { "Package", "Result", "Result file Path" },true);
+            logger.WriteTestCaseResultTableHeader(new string[] { "Package", "Result", "Result file Path"},true);
             foreach (Tuple<string, string, string> result in resultsDict)
             {
                 logger.WriteTestCaseResultWithoutLink(result.Item1, result.Item2, result.Item3);                
@@ -107,6 +108,79 @@ namespace NuGetPackageValidator
             sw.Write(body);
             sw.Flush();
             sw.Close();
+        }
+        public static void DumpStaticAnalysisReport()
+        {
+            HTMLLogger logger = new HTMLLogger();
+            logger.WriteTestCaseResultTableHeader(new string[] { "Package","Contain xml", "strongname signed", "Authenticode signed", "Ps signed", "Copyright", "License Url", "Icon Url", "Tags", "Title", "Summary", "Project Url", "License Acceptance", "Summary localized", "Title localized", "Description localized" }, true);
+            foreach(Tuple<string, string, string> result in resultsDict)
+            {
+                if (result.Item2.Contains("Failed")) continue;
+                logger.AddHtmlTableRowForStaticAnalysisReport(new string[] { result.Item1, "Passed","Passed", "Passed" ,"Passed", "Passed" , "Passed" , "Passed" , "Passed" , "Passed" , "Passed" , "Passed" , "Passed" , "Passed" , "Passed" , "Passed" });
+            }
+
+            foreach(Tuple<string, string> error in errorsDict)
+            {
+                List<string> result = new List<string>();
+                result.Add(error.Item1);
+
+                if (error.Item2.Contains("Assembly lacks XML document file.")) result.Add("Failed");
+                else result.Add("Passed");
+
+                if (error.Item2.Contains("Assembly not strongname signed")) result.Add("Failed");
+                else result.Add("Passed");
+
+                if (error.Item2.Contains("Assembly not authenticode signed")) result.Add("Failed");
+                else result.Add("Passed");
+
+                if (error.Item2.Contains("PowerShell script is not signed.")) result.Add("Failed");
+                else result.Add("Passed");
+
+                if (error.Item2.Contains("Copyright attribute is missing")) result.Add("Failed");
+                else result.Add("Passed");
+
+                if (error.Item2.Contains("License Url is not set")) result.Add("Failed");
+                else result.Add("Passed");
+
+                if (error.Item2.Contains("Icon Url is not set")) result.Add("Failed");
+                else result.Add("Passed");
+
+                if (error.Item2.Contains("Tags attribute is missing")) result.Add("Failed");
+                else result.Add("Passed");
+
+                if (error.Item2.Contains("Title attribute is missing")) result.Add("Failed");
+                else result.Add("Passed");
+
+                if (error.Item2.Contains("Summary attribute is missing")) result.Add("Failed");
+                else result.Add("Passed");
+
+                if (error.Item2.Contains("Project Url attribute is missing")) result.Add("Failed");
+                else result.Add("Passed");
+
+                if (error.Item2.Contains("Require License Acceptance is not set to true")) result.Add("Failed");
+                else result.Add("Passed");
+
+                if (error.Item2.Contains("Package summary is not localized correctly")) result.Add("Failed");
+                else result.Add("Passed");
+
+                if (error.Item2.Contains("Package title is not localized correctly")) result.Add("Failed");
+                else result.Add("Passed");
+
+                if (error.Item2.Contains("Package description is not localized")) result.Add("Failed");
+                else result.Add("Passed");
+
+                logger.AddHtmlTableRowForStaticAnalysisReport(result.ToArray());
+                StreamReader sr = new StreamReader("ConsolidatedResultsTemplate.htm");
+                string body = sr.ReadToEnd();
+                sr.Close();
+                body = body.Replace("{Rows}", logger.stringwriter.ToString());
+                if (!string.IsNullOrEmpty(ConfigurationManager.AppSettings["SmtpUserName"]) && !string.IsNullOrEmpty(ConfigurationManager.AppSettings["SmtpPassword"]) && !string.IsNullOrEmpty(ConfigurationManager.AppSettings["MailRecepientAddress"]))
+                    MailHelper.SendMail(body);
+                StreamWriter sw = new StreamWriter(Path.Combine(AppSettingsHelper.TestResultsPathKeyValue, "ConsolidatedStaticAnalysisReport" + ".htm"));
+                sw.Write(body);
+                sw.Flush();
+                sw.Close();
+            }
         }
 
         public static void DumpErrorLog()
